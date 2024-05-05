@@ -7,10 +7,6 @@
 static const char *TAG = "i2c-simple-example";
 
 char buffer[3];
-
-int counter = 0 ;
-int tmp;
-
 /**
  * @brief i2c master initialization
  */
@@ -54,17 +50,24 @@ void app_main(void)
 
     lcd_init();
     lcd_clear();
-    int hour,minute,second;
-    while(1){
-    	
-    	counter++;
-    	tmp = counter;
-    	hour = tmp/3600;
-    	tmp = tmp%3600;
-    	minute = tmp/60;
-    	tmp = tmp%60;
-    	second = tmp;
+    while (1)
+    {
+        lcd_clear();
+        lcd_put_cur(0, 4);
+        lcd_send_string("00:00:00");
+        int hour = 0;
+        int minute = 0;
+        int second = 0;
 
-        display_time_lcd(int hour, int minute, int second);
+        for (hour = 0; hour < 24; hour++)
+        {
+            for (minute = 0; minute < 60; minute++)
+            {
+                for (second = 0; second < 60; second++)
+                {
+                    display_time_lcd(hour, minute, second);
+                }
+            }
+        }
     }
 }
