@@ -1,16 +1,34 @@
+/* i2c - Simple example
+
+   Simple I2C example that shows how to initialize I2C
+   as well as reading and writing from and to registers for a sensor connected over I2C.
+
+   The sensor used in this example is a MPU9250 inertial measurement unit.
+
+   For other examples please check:
+   https://github.com/espressif/esp-idf/tree/master/examples
+
+   See README.md file to get detailed usage of this example.
+
+   This example code is in the Public Domain (or CC0 licensed, at your option.)
+
+   Unless required by applicable law or agreed to in writing, this
+   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+   CONDITIONS OF ANY KIND, either express or implied.
+*/
 #include <stdio.h>
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "i2c-lcd.h"
 #include "unistd.h"
-
+#include "esp_timer.h"
 static const char *TAG = "i2c-simple-example";
 
-char buffer[3];
+char buffer[10];
 
-int counter = 0 ;
+int counter = 0;
 int tmp;
-
+int hour, minute, second;
 /**
  * @brief i2c master initialization
  */
@@ -47,6 +65,26 @@ void display_time_lcd(int hour, int minute, int second)
     lcd_send_string(buffer);
 }
 
+void Digital_Clock(void *arg);
+void Digital_Clock(void *arg)
+{
+    counter++;
+    tmp = counter;
+    hour = tmp / 3600;
+    tmp = tmp % 3600;
+    minute = tmp / 60;
+    tmp = tmp % 60;
+    second = tmp;
+
+    display_time_lcd(hour, minute, second);
+
+    if (counter == 86400)
+    {
+        counter = 0;
+        lcd_put_cur(0, 4);
+        lcd_send_string("00:00:00");
+    }
+}
 void app_main(void)
 {
     ESP_ERROR_CHECK(i2c_master_init());
@@ -54,17 +92,17 @@ void app_main(void)
 
     lcd_init();
     lcd_clear();
-    int hour,minute,second;
-    while(1){
-    	
-    	counter++;
-    	tmp = counter;
-    	hour = tmp/3600;
-    	tmp = tmp%3600;
-    	minute = tmp/60;
-    	tmp = tmp%60;
-    	second = tmp;
+    lcd_put_cur(0, 4);
+    lcd_send_string("00:00:00");
+    //    Khoi tao timer
+    const esp_timer_create_args_t periodic_timer_args = {
+        .callback = &Digital_Clock,
+        .name = "periodic"};
+    esp_timer_handle_t periodic_timer;
 
-        display_time_lcd(int hour, int minute, int second);
+    esp_timer_create(&periodic_timer_args, &periodic_timer);
+    while (1)
+    {
+        esp_timer_start_periodic(periodic_timer, 1000000);
     }
 }
